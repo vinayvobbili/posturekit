@@ -1,0 +1,53 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "posturekit"
+version = "0.1.0"
+description = "Ingest large, messy data-security exports (.xlsx/.csv) into DuckDB and score them for risk. A model-agnostic DSPM kernel — bring your own data and risk matrix."
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "MIT" }
+authors = [{ name = "Vinay Vobbilichetty" }]
+keywords = [
+    "security",
+    "dspm",
+    "data-security",
+    "risk-scoring",
+    "duckdb",
+    "xlsx",
+    "csv",
+    "ingest",
+    "exposure",
+    "data-classification",
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Information Technology",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Security",
+    "Topic :: Database",
+]
+# The scoring engine is pure-Python and dependency-free; the ingest stack is the
+# `ingest` extra so a scoring-only install stays light.
+dependencies = []
+
+[project.optional-dependencies]
+ingest = ["duckdb>=0.9", "pyarrow>=12", "lxml>=4.9"]
+dev = ["pytest>=7", "duckdb>=0.9", "pyarrow>=12", "lxml>=4.9", "build", "twine"]
+
+[project.urls]
+Homepage = "https://github.com/vinayvobbili/posturekit"
+Source = "https://github.com/vinayvobbili/posturekit"
+
+[tool.hatch.build.targets.wheel]
+packages = ["posturekit"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
