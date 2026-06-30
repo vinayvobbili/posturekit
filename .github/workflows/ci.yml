@@ -1,0 +1,57 @@
+name: CI
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+
+# Cancel an in-progress run when a newer commit is pushed to the same ref.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Test (py${{ matrix.python-version }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.9", "3.10", "3.11", "3.12"]
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: ${{ matrix.python-version }}
+      - run: python -m pip install --upgrade pip
+      # [dev] pulls in the ingest stack (duckdb/pyarrow/lxml) so the ingest tests
+      # run too, not just the dependency-free scoring tests.
+      - run: pip install -e ".[dev]"
+      - run: python -m pytest -q
+
+  scoring-only:
+    name: Scoring-only install (zero deps)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      # A bare install must import and score without the ingest stack present.
+      - run: pip install .
+      - run: |
+          python - <<'PY'
+          import posturekit
+          assert posturekit.ingest_table is None, "ingest should be absent on a bare install"
+          p = posturekit.score_resource({
+              "exposure_level": "anyone",
+              "classifications": ["credentials", "pii"],
+              "sensitive_hit_count": 4200,
+              "age_years": 9,
+          })
+          assert p["risk_level"] == "Critical", p
+          print("scoring-only OK:", p["risk_level"])
+          PY
